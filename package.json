@@ -1,0 +1,66 @@
+{
+  "name": "with-request",
+  "version": "0.0.6",
+  "description": "HOC to call cacheable requests",
+  "main": "lib/withRequest.js",
+  "module": "es/withRequest.js",
+  "typings": "./index.d.ts",
+  "npmName": "with-request",
+  "sideEffects": false,
+  "files": [
+    "dist",
+    "lib",
+    "es",
+    "src",
+    "index.d.ts"
+  ],
+  "scripts": {
+    "build": "rollup -c",
+    "test": "node_modules/.bin/jest --watchAll"
+  },
+  "devEngines": {
+    "node": "8.12.0",
+    "npm": "6.4.1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ArekRado/with-request.git"
+  },
+  "keywords": [
+    "react",
+    "request",
+    "HOC",
+    "fetch",
+    "cache"
+  ],
+  "author": "Arek Rado",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/ArekRado/with-request/issues"
+  },
+  "homepage": "https://github.com/ArekRado/with-request#readme",
+  "dependencies": {
+    "react": "16.6.1"
+  },
+  "devDependencies": {
+    "@babel/core": "7.1.5",
+    "@babel/preset-env": "7.1.5",
+    "@types/enzyme": "3.1.15",
+    "@types/enzyme-adapter-react-16": "1.0.3",
+    "@types/jest": "23.3.9",
+    "@types/react": "16.7.3",
+    "@types/react-dom": "16.0.9",
+    "babel-loader": "8.0.4",
+    "enzyme": "3.7.0",
+    "enzyme-adapter-react-16": "1.7.0",
+    "jest": "23.6.0",
+    "react-dom": "16.6.1",
+    "rollup": "0.67.1",
+    "rollup-plugin-babel": "4.0.3",
+    "rollup-plugin-babel-minify": "6.1.1",
+    "rollup-plugin-typescript2": "0.18.0",
+    "ts-jest": "23.10.4",
+    "tslint-config-standard": "8.0.1",
+    "typescript": "3.1.6"
+  }
+}
