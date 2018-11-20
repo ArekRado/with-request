@@ -21,31 +21,33 @@ yarn add with-request
 
 ### **createRequest** - returns withRequest
 
-| Params | Types                                                                             | Default value | Description                                                         |
-| ------ | --------------------------------------------------------------------------------- | ------------- | ------------------------------------------------------------------- |
-| fetch  | (param: {url: string, method: string, requestPayload: any}) => Promise< Payload > | -             | Used to communicate with eg: axios or fetch.                        |
+| Params | Types                                                                             | Default value | Description                                                                           |
+| ------ | --------------------------------------------------------------------------------- | ------------- | ------------------------------------------------------------------------------------- |
+| fetch  | (param: {url: string, method: string, requestPayload: any}) => Promise< Payload > | -             | Used to communicate with eg: axios or fetch.                                          |
 | cancel | () => void                                                                        | () => {}      | **IN PROGRESS** - Called when request is in progress but component has been unmounted |
 
 ### **withRequest**
 
-| Params               | Types                                       | Default value      | Description                                                                                                    |
-| -------------------- | ------------------------------------------- | ------------------ | -------------------------------------------------------------------------------------------------------------- |
-| url                  | (props: Props) => string                    | -                  | Used to create request url based on component props                                                            |
-| method               | string                                      | 'GET'              | Request type                                                                                                   |
-| requestPayload       | (props: Props) => any                       | () => null         | Used to create request body based on component props                                                           |
-| callOnProps          | (props: Props, prevProps: Props) => boolean | () => false        | Will call request when return true - uses componentDidUpdate to detect updates                                 |
-| callOnMount          | boolean                                     | true               | Call request on componentDidMount                                                                              |
+| Params               | Types                                       | Default value                      | Description                                                                                                    |
+| -------------------- | ------------------------------------------- | ---------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| url                  | (props: Props) => string                    | -                                  | Used to create request url based on component props                                                            |
+| method               | string                                      | 'GET'                              | Request type                                                                                                   |
+| getRequestPayload    | (props: Props) => any                       | () => null                         | Used to create request body based on component props                                                           |
+| callOnProps          | (props: Props, prevProps: Props) => boolean | () => false                        | Will call request when return true - uses componentDidUpdate to detect updates                                 |
+| callOnMount          | boolean                                     | true                               | Call request on componentDidMount                                                                              |
 | cache                | (Check cache example)                       | { set: () => {}, get: () => null } | set - called after each successful fetch. get - HOC uses returned value from `get` as payload (if is not null) |
-| deleteCacheOnUnmount | () => void                                  | () => {}           | Called on unmount, useful to clean unused cache                                                                |
+| deleteCacheOnUnmount | () => void                                  | () => {}                           | Called on unmount, useful to clean unused cache                                                                |
 
 ## Examples
 
 Basic:
+
 ```js
 withRequest({ url: () => '//your.api/products' })(YourAwesomeComponent)
 ```
 
 Customizable url:
+
 ```js
 withRequest({ url: ({ id }) => `//your.api/products/${id}` })(
   YourAwesomeComponent,
@@ -53,15 +55,17 @@ withRequest({ url: ({ id }) => `//your.api/products/${id}` })(
 ```
 
 POST with payload:
+
 ```js
 withRequest({
   url: ({ id }) => `//your.api/products/${id}`,
   method: 'POST',
-  requestPayload: ({ newProductName ) => ({ name: newProductName })
+  getRequestPayload: ({ newProductName }) => ({ name: newProductName })
 })(YourAwesomeComponent)
 ```
 
 Call request on props change:
+
 ```js
 withRequest({
   url: () => '//your.api/products',
@@ -70,6 +74,7 @@ withRequest({
 ```
 
 Cache usage example:
+
 ```ts
 type Cache<Props, Payload, RequestPayload> = {
   set: (
