@@ -3,15 +3,19 @@ import { Component } from 'react'
 
 export const createFetch = <Props, Payload, RequestPayload>(
   cache: Cache<Props, Payload, RequestPayload>,
-  url: Url<Props>,
+  url: Url<Props, any>,
   method: string,
-  getRequestPayload: GetRequestPayload<Props, RequestPayload>,
+  getRequestPayload: GetRequestPayload<Props, RequestPayload, any>,
   fetch: Fetch<Payload, RequestPayload>,
-) => async (setState: Component['setState'], props: Props) => {
+) => async (
+  setState: Component['setState'],
+  props: Props,
+  fetchParams?: any,
+) => {
   const requestData = {
-    url: url(props),
+    url: url(props, fetchParams),
     method,
-    requestPayload: getRequestPayload(props),
+    requestPayload: getRequestPayload(props, fetchParams),
   }
   const cachePayload = cache.get(props, requestData)
   if (cachePayload === null) {

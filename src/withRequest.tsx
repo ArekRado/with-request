@@ -16,7 +16,7 @@ const N = () => null
 export const createRequest = ({
   fetch,
   cancel = () => {},
-}: CreateRequestParams) => <Props, Payload, Error = {}, RequestPayload = any>({
+}: CreateRequestParams) => <Props, Payload, Error = {}, RequestPayload = any, FetchParams = any>({
   url,
   method = 'GET',
   dataKey = 'request',
@@ -33,6 +33,9 @@ export const createRequest = ({
   return class WithRequestHOC extends Component<Props, State<Payload, Error>> {
     constructor(props: Props) {
       super(props)
+
+      this.setState = this.setState.bind(this)
+
       this.state = {
         isLoading: callOnMount,
         isError: false,
@@ -56,15 +59,17 @@ export const createRequest = ({
     }
 
     render() {
-      return createElement(WrappedComponent, {
+      const injectedProps = {
         [dataKey]: {
           isLoading: this.state.isLoading,
           isError: this.state.isError,
           payload: this.state.payload,
           error: this.state.error,
-          fetch: () => callFetch(this.setState, this.props),
+          fetch: (params: FetchParams) => callFetch(this.setState, this.props, params),
         },
-      })
+      }
+
+      return createElement(WrappedComponent, Object.assign({}, this.props, injectedProps))
     }
   }
 }

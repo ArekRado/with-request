@@ -1,13 +1,18 @@
 import { ComponentType, Component } from 'react'
-import { checkPropTypes } from 'prop-types';
+import { checkPropTypes } from 'prop-types'
 
-type Url<Props> = (props: Props) => string
-type GetRequestPayload<Props, RequestPayload> = (
+type Url<Props, FetchParams> = (
   props: Props,
+  fetchParams: FetchParams,
+) => string
+
+type GetRequestPayload<Props, RequestPayload, FetchParams> = (
+  props: Props,
+  fetchParams: FetchParams,
 ) => RequestPayload | null
 
 export type WithFetchParams<Props, Payload, RequestPayload> = {
-  url: Url<Props>
+  url: Url<Props, any>
   method?: string
   dataKey?: string
   getRequestPayload?: (props: Props) => RequestPayload | null
