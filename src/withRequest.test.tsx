@@ -19,21 +19,99 @@ describe('withRequest', () => {
   describe('HOC', () => {
     const BasicComponent: React.FunctionComponent = () => null
 
-    it('Should returns enhanced component with additional props', () => {
+    it('Should be composable', () => {
       const withEmptyRequest = createRequest({ fetch: () => emptyResponse })
+      const url = () => ''
 
-      const WrappedComponent = withEmptyRequest({ url: () => '' })(
-        BasicComponent,
+      const WrappedComponent = withEmptyRequest({
+        url,
+        dataKey: 'test1',
+      })(
+        withEmptyRequest({
+          url,
+          dataKey: 'test2',
+        })(BasicComponent),
       )
 
       const rendered = shallow(<WrappedComponent />)
-      const { request } = rendered.props()
+      const { test1, test2 } = rendered.dive().props() as any
 
-      expect(typeof request.fetch).toBe('function')
-      expect(request.error).toBe(null)
-      expect(request.payload).toBe(null)
-      expect(request.isError).toBe(false)
-      expect(request.isLoading).toBe(true)
+      expect(typeof test1.fetch).toBeDefined()
+      expect(typeof test2.fetch).toBeDefined()
+    })
+
+    it('Should deleteCacheOnUnmount call on unmount when is set', () => {
+      const spy = jest.fn(() => null)
+      const withEmptyRequest = createRequest({ fetch: () => emptyResponse })
+
+      const WrappedComponent = withEmptyRequest({
+        url: () => '',
+        deleteCacheOnUnmount: spy,
+      })(BasicComponent)
+
+      const rendered = mount(<WrappedComponent />)
+      rendered.unmount()
+
+      expect(spy).toHaveBeenCalled()
+    })
+
+    describe('Additional props', () => {
+      it('Should returns enhanced component with additional props', () => {
+        const withEmptyRequest = createRequest({ fetch: () => emptyResponse })
+
+        const WrappedComponent = withEmptyRequest({ url: () => '' })(
+          BasicComponent,
+        )
+
+        const rendered = shallow(<WrappedComponent />)
+        const { request } = rendered.props()
+
+        expect(typeof request.fetch).toBe('function')
+        expect(typeof request.cancel).toBe('function')
+        expect(request.error).toBe(null)
+        expect(request.payload).toBe(null)
+        expect(request.isError).toBe(false)
+        expect(request.isLoading).toBe(true)
+      })
+
+      it('Should set props with correct key', () => {
+        const withEmptyRequest = createRequest({ fetch: () => emptyResponse })
+
+        const WrappedComponent = withEmptyRequest({
+          url: () => '',
+          dataKey: 'test',
+        })(BasicComponent)
+
+        const rendered = shallow(<WrappedComponent />)
+        const { test } = rendered.props()
+
+        expect(typeof test.fetch).toBe('function')
+        expect(typeof test.cancel).toBe('function')
+        expect(test.error).toBe(null)
+        expect(test.payload).toBe(null)
+        expect(test.isError).toBe(false)
+        expect(test.isLoading).toBe(true)
+      })
+
+      it('call fetch from props should call main fetch', () => {
+        const spy = jest.fn(() => null)
+        const withEmptyRequest = createRequest({
+          fetch: () =>
+            new Promise(resolve => {
+              spy()
+              resolve()
+            }),
+        })
+
+        const WrappedComponent = withEmptyRequest({
+          url: () => '',
+        })(BasicComponent)
+
+        const rendered = shallow(<WrappedComponent />)
+        rendered.props().request.fetch()
+
+        expect(spy).toHaveBeenCalled()
+      })
     })
 
     describe('callOnMount', () => {
@@ -75,21 +153,6 @@ describe('withRequest', () => {
 
         expect(spy).not.toHaveBeenCalled()
       })
-    })
-
-    it('Should deleteCacheOnUnmount call on unmount when is set', () => {
-      const spy = jest.fn(() => null)
-      const withEmptyRequest = createRequest({ fetch: () => emptyResponse })
-
-      const WrappedComponent = withEmptyRequest({
-        url: () => '',
-        deleteCacheOnUnmount: spy,
-      })(BasicComponent)
-
-      const rendered = mount(<WrappedComponent />)
-      rendered.unmount()
-
-      expect(spy).toHaveBeenCalled()
     })
 
     describe('callOnProps', () => {
@@ -160,7 +223,7 @@ describe('withRequest', () => {
       })
     })
 
-    describe('cache', () => {
+    describe('Cache', () => {
       it('Should return data from cache if is defined', () => {
         const withEmptyRequest = createRequest({ fetch: () => emptyResponse })
 
@@ -195,5 +258,7 @@ describe('withRequest', () => {
     //   expect(request.isError).toBe(true)
     //   expect(request.error).toBe('error')
     // })
+
+    describe('Cancel', () => {})
   })
 })

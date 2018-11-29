@@ -21,6 +21,7 @@ export const createFetch = <Props, Payload, RequestPayload>(
   if (cachePayload === null) {
     try {
       setState({ isLoading: true })
+
       const payload = await fetch(requestData)
 
       cache.set(props, requestData, payload)

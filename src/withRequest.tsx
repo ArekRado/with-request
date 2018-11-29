@@ -16,7 +16,13 @@ const N = () => null
 export const createRequest = ({
   fetch,
   cancel = () => {},
-}: CreateRequestParams) => <Props, Payload, Error = {}, RequestPayload = any, FetchParams = any>({
+}: CreateRequestParams) => <
+  Props,
+  Payload,
+  Error = {},
+  RequestPayload = any,
+  FetchParams = any
+>({
   url,
   method = 'GET',
   dataKey = 'request',
@@ -29,12 +35,14 @@ export const createRequest = ({
   WrappedComponent: WrappedComponentType<Props, Payload, RequestPayload, Error>,
 ) => {
   const callFetch = createFetch(cache, url, method, getRequestPayload, fetch)
+  let isMounted = false
 
   return class WithRequestHOC extends Component<Props, State<Payload, Error>> {
     constructor(props: Props) {
       super(props)
 
       this.setState = this.setState.bind(this)
+      this.safeSetState = this.safeSetState.bind(this)
 
       this.state = {
         isLoading: callOnMount,
@@ -45,17 +53,24 @@ export const createRequest = ({
     }
 
     componentDidMount() {
-      callOnMount && callFetch(this.setState, this.props)
+      isMounted = true
+      callOnMount && callFetch(this.safeSetState, this.props, () => isMounted)
     }
 
     componentWillUnmount() {
+      isMounted = false
+      cancel()
       deleteCacheOnUnmount()
     }
 
     componentDidUpdate(prevProps: Props) {
       if (prevProps !== this.props && callOnProps(prevProps, this.props)) {
-        callFetch(this.setState, this.props)
+        callFetch(this.safeSetState, this.props)
       }
+    }
+
+    safeSetState(data: State<Payload, Error>) {
+      isMounted && this.setState(data)
     }
 
     render() {
@@ -65,11 +80,16 @@ export const createRequest = ({
           isError: this.state.isError,
           payload: this.state.payload,
           error: this.state.error,
-          fetch: (params: FetchParams) => callFetch(this.setState, this.props, params),
+          fetch: (params: FetchParams) =>
+            callFetch(this.safeSetState, this.props, params),
+          cancel: () => cancel()
         },
       }
 
-      return createElement(WrappedComponent, Object.assign({}, this.props, injectedProps))
+      return createElement(
+        WrappedComponent,
+        Object.assign({}, this.props, injectedProps),
+      )
     }
   }
 }
