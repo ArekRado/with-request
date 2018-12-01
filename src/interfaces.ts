@@ -1,12 +1,11 @@
-import { ComponentType, Component } from 'react'
-import { checkPropTypes } from 'prop-types'
+import { ComponentType } from 'react'
 
-type Url<Props, FetchParams> = (
+export type Url<Props, FetchParams> = (
   props: Props,
   fetchParams: FetchParams,
 ) => string
 
-type GetRequestPayload<Props, RequestPayload, FetchParams> = (
+export type GetRequestPayload<Props, RequestPayload, FetchParams> = (
   props: Props,
   fetchParams: FetchParams,
 ) => RequestPayload | null
@@ -20,6 +19,8 @@ export type WithFetchParams<Props, Payload, RequestPayload> = {
   callOnMount?: boolean
   cache?: Cache<Props, Payload, RequestPayload>
   deleteCacheOnUnmount?: () => void
+  cancelOnUnmount?: boolean
+  cancelOnProps?: (props: Props, nextProps: Props) => boolean
 }
 
 export type Cache<Props, Payload, RequestPayload> = {

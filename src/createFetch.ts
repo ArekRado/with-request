@@ -1,4 +1,4 @@
-import { Fetch, GetRequestPayload, Url, Cache } from './typings'
+import { Fetch, GetRequestPayload, Url, Cache } from './interfaces'
 import { Component } from 'react'
 
 export const createFetch = <Props, Payload, RequestPayload>(

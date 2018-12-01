@@ -17,7 +17,13 @@
     "noUnusedLocals": true,
     "baseUrl": "src",
     "declaration": true,
-    "declarationDir": "./typings.d.ts",
+    "declarationDir": "./dist/typings.d.ts"
   },
-  "exclude": ["node_modules", "src/*.test.*"]
+  "include": ["src/**/*"],
+  "exclude": [
+    "node_modules",
+    "**/*.test.ts",
+    "**/*.test.tsx"
+  ],
+  "filesGlob": ["typings/index.d.ts", "src/**/*"]
 }

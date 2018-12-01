@@ -7,11 +7,13 @@ import * as Adapter from 'enzyme-adapter-react-16'
 configure({ adapter: new Adapter() })
 
 describe('withRequest', () => {
-  const emptyResponse = new Promise(resolve => setTimeout(() => resolve(), 0))
+  const emptyFetch = () =>
+    new Promise(resolve => setTimeout(() => resolve(), 0))
+  const T = () => true
 
   describe('createRequest', () => {
     it('Should returns function', () => {
-      const withRequest = createRequest({ fetch: () => emptyResponse })
+      const withRequest = createRequest({ fetch: emptyFetch })
       expect(typeof withRequest).toBe('function')
     })
   })
@@ -19,8 +21,26 @@ describe('withRequest', () => {
   describe('HOC', () => {
     const BasicComponent: React.FunctionComponent = () => null
 
+    it('Should not throw error when call fetch on unmounted component', () => {
+      const withEmptyRequest = createRequest({
+        fetch: emptyFetch,
+      })
+
+      const WrappedComponent = withEmptyRequest({
+        url: () => '',
+        callOnMount: false,
+      })(BasicComponent)
+
+      const rendered = shallow(<WrappedComponent />)
+      const fetch = rendered.props().request.fetch
+
+      rendered.unmount()
+
+      expect(() => fetch()).not.toThrow()
+    })
+
     it('Should be composable', () => {
-      const withEmptyRequest = createRequest({ fetch: () => emptyResponse })
+      const withEmptyRequest = createRequest({ fetch: emptyFetch })
       const url = () => ''
 
       const WrappedComponent = withEmptyRequest({
@@ -42,7 +62,7 @@ describe('withRequest', () => {
 
     it('Should deleteCacheOnUnmount call on unmount when is set', () => {
       const spy = jest.fn(() => null)
-      const withEmptyRequest = createRequest({ fetch: () => emptyResponse })
+      const withEmptyRequest = createRequest({ fetch: emptyFetch })
 
       const WrappedComponent = withEmptyRequest({
         url: () => '',
@@ -55,63 +75,61 @@ describe('withRequest', () => {
       expect(spy).toHaveBeenCalled()
     })
 
-    describe('Additional props', () => {
-      it('Should returns enhanced component with additional props', () => {
-        const withEmptyRequest = createRequest({ fetch: () => emptyResponse })
+    it('Should returns enhanced component with additional props', () => {
+      const withEmptyRequest = createRequest({ fetch: emptyFetch })
 
-        const WrappedComponent = withEmptyRequest({ url: () => '' })(
-          BasicComponent,
-        )
+      const WrappedComponent = withEmptyRequest({ url: () => '' })(
+        BasicComponent,
+      )
 
-        const rendered = shallow(<WrappedComponent />)
-        const { request } = rendered.props()
+      const rendered = shallow(<WrappedComponent />)
+      const { request } = rendered.props()
 
-        expect(typeof request.fetch).toBe('function')
-        expect(typeof request.cancel).toBe('function')
-        expect(request.error).toBe(null)
-        expect(request.payload).toBe(null)
-        expect(request.isError).toBe(false)
-        expect(request.isLoading).toBe(true)
+      expect(typeof request.fetch).toBe('function')
+      expect(typeof request.cancel).toBe('function')
+      expect(request.error).toBe(null)
+      expect(request.payload).toBe(null)
+      expect(request.isError).toBe(false)
+      expect(request.isLoading).toBe(true)
+    })
+
+    it('Should set props with correct key', () => {
+      const withEmptyRequest = createRequest({ fetch: emptyFetch })
+
+      const WrappedComponent = withEmptyRequest({
+        url: () => '',
+        dataKey: 'test',
+      })(BasicComponent)
+
+      const rendered = shallow(<WrappedComponent />)
+      const { test } = rendered.props()
+
+      expect(typeof test.fetch).toBe('function')
+      expect(typeof test.cancel).toBe('function')
+      expect(test.error).toBe(null)
+      expect(test.payload).toBe(null)
+      expect(test.isError).toBe(false)
+      expect(test.isLoading).toBe(true)
+    })
+
+    it('call fetch from props should call main fetch', () => {
+      const spy = jest.fn(() => null)
+      const withEmptyRequest = createRequest({
+        fetch: () =>
+          new Promise(resolve => {
+            spy()
+            resolve()
+          }),
       })
 
-      it('Should set props with correct key', () => {
-        const withEmptyRequest = createRequest({ fetch: () => emptyResponse })
+      const WrappedComponent = withEmptyRequest({
+        url: () => '',
+      })(BasicComponent)
 
-        const WrappedComponent = withEmptyRequest({
-          url: () => '',
-          dataKey: 'test',
-        })(BasicComponent)
+      const rendered = shallow(<WrappedComponent />)
+      rendered.props().request.fetch()
 
-        const rendered = shallow(<WrappedComponent />)
-        const { test } = rendered.props()
-
-        expect(typeof test.fetch).toBe('function')
-        expect(typeof test.cancel).toBe('function')
-        expect(test.error).toBe(null)
-        expect(test.payload).toBe(null)
-        expect(test.isError).toBe(false)
-        expect(test.isLoading).toBe(true)
-      })
-
-      it('call fetch from props should call main fetch', () => {
-        const spy = jest.fn(() => null)
-        const withEmptyRequest = createRequest({
-          fetch: () =>
-            new Promise(resolve => {
-              spy()
-              resolve()
-            }),
-        })
-
-        const WrappedComponent = withEmptyRequest({
-          url: () => '',
-        })(BasicComponent)
-
-        const rendered = shallow(<WrappedComponent />)
-        rendered.props().request.fetch()
-
-        expect(spy).toHaveBeenCalled()
-      })
+      expect(spy).toHaveBeenCalled()
     })
 
     describe('callOnMount', () => {
@@ -156,7 +174,7 @@ describe('withRequest', () => {
     })
 
     describe('callOnProps', () => {
-      it('Should not call fetch when props doesn not changed', () => {
+      it('Should not call fetch when props has not been changed', () => {
         const spy = jest.fn(() => null)
         const withEmptyRequest = createRequest({
           fetch: () =>
@@ -225,7 +243,7 @@ describe('withRequest', () => {
 
     describe('Cache', () => {
       it('Should return data from cache if is defined', () => {
-        const withEmptyRequest = createRequest({ fetch: () => emptyResponse })
+        const withEmptyRequest = createRequest({ fetch: emptyFetch })
 
         const WrappedComponent = withEmptyRequest({
           url: () => '',
@@ -242,23 +260,81 @@ describe('withRequest', () => {
       })
     })
 
-    // it('Should catch error and set isError flag', async () => {
-    //   const withEmptyRequest = createRequest({
-    //     fetch: () => new Promise((_, reject) => reject('error')),
-    //   })
+    describe('Cancel', () => {
+      it('Should not call cancel when props has not been changed', () => {
+        const spy = jest.fn(() => {})
+        const withEmptyRequest = createRequest({
+          fetch: emptyFetch,
+          cancel: spy,
+        })
 
-    //   const WrappedComponent = withEmptyRequest({
-    //     url: () => '',
-    //   })(BasicComponent)
+        const WrappedComponent = withEmptyRequest({
+          url: () => '',
+          callOnMount: false,
+          cancelOnProps: T,
+        })(BasicComponent)
 
-    //   const { request } = mount(<WrappedComponent />)
-    //     .children()
-    //     .props()
+        const rendered = mount(<WrappedComponent />)
+        rendered.update()
 
-    //   expect(request.isError).toBe(true)
-    //   expect(request.error).toBe('error')
-    // })
+        expect(spy).not.toHaveBeenCalled()
+      })
 
-    describe('Cancel', () => {})
+      it('Should call cancel by default when props has been changed', () => {
+        const spy = jest.fn(() => {})
+        const withEmptyRequest = createRequest({
+          fetch: emptyFetch,
+          cancel: spy,
+        })
+
+        const WrappedComponent = withEmptyRequest({
+          url: () => '',
+          callOnMount: false,
+          cancelOnProps: T,
+        })(BasicComponent)
+
+        const rendered = mount(<WrappedComponent />)
+        rendered.setProps({ test: 123 })
+        rendered.update()
+
+        expect(spy).toHaveBeenCalled()
+      })
+
+      it('Should not call cancel by default when props has been changed', () => {
+        const spy = jest.fn(() => {})
+        const withEmptyRequest = createRequest({
+          fetch: emptyFetch,
+          cancel: spy,
+        })
+
+        const WrappedComponent = withEmptyRequest({
+          url: () => '',
+          callOnMount: false,
+        })(BasicComponent)
+
+        const rendered = mount(<WrappedComponent />)
+        rendered.setProps({ test: 123 })
+        rendered.update()
+
+        expect(spy).not.toHaveBeenCalled()
+      })
+
+      it('call cancel from props should call main cancel', () => {
+        const spy = jest.fn(() => {})
+        const withEmptyRequest = createRequest({
+          fetch: emptyFetch,
+          cancel: spy,
+        })
+
+        const WrappedComponent = withEmptyRequest({
+          url: () => '',
+        })(BasicComponent)
+
+        const rendered = shallow(<WrappedComponent />)
+        rendered.props().request.cancel()
+
+        expect(spy).toHaveBeenCalled()
+      })
+    })
   })
 })

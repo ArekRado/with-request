@@ -7,16 +7,13 @@ import {
   State,
   WrappedComponentType,
   CreateRequestParams,
-} from './typings'
+} from './interfaces'
 
 const V = () => {}
 const F = () => false
 const N = () => null
 
-export const createRequest = ({
-  fetch,
-  cancel = () => {},
-}: CreateRequestParams) => <
+export const createRequest = ({ fetch, cancel = V }: CreateRequestParams) => <
   Props,
   Payload,
   Error = {},
@@ -31,6 +28,8 @@ export const createRequest = ({
   callOnMount = true,
   cache = { set: V, get: N },
   deleteCacheOnUnmount = V,
+  cancelOnUnmount = true,
+  cancelOnProps = F,
 }: WithFetchParams<Props, Payload, RequestPayload>) => (
   WrappedComponent: WrappedComponentType<Props, Payload, RequestPayload, Error>,
 ) => {
@@ -54,18 +53,24 @@ export const createRequest = ({
 
     componentDidMount() {
       isMounted = true
-      callOnMount && callFetch(this.safeSetState, this.props, () => isMounted)
+      callOnMount && callFetch(this.safeSetState, this.props)
     }
 
     componentWillUnmount() {
       isMounted = false
-      cancel()
+      cancelOnUnmount && cancel()
       deleteCacheOnUnmount()
     }
 
     componentDidUpdate(prevProps: Props) {
-      if (prevProps !== this.props && callOnProps(prevProps, this.props)) {
-        callFetch(this.safeSetState, this.props)
+      if (prevProps !== this.props) {
+        if (callOnProps(prevProps, this.props)) {
+          callFetch(this.safeSetState, this.props)
+        }
+
+        if (cancelOnProps(prevProps, this.props)) {
+          cancel()
+        }
       }
     }
 
@@ -82,7 +87,7 @@ export const createRequest = ({
           error: this.state.error,
           fetch: (params: FetchParams) =>
             callFetch(this.safeSetState, this.props, params),
-          cancel: () => cancel()
+          cancel: () => cancel(),
         },
       }
 

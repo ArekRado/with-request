@@ -6,7 +6,7 @@ import pkg from './package.json'
 export default {
   input: './src/withRequest.tsx',
   plugins: [
-    typescript(),
+    typescript({ useTsconfigDeclarationDir: true, tsconfig: 'tsconfig.json' }),
     babel({
       extensions: ['.ts', '.tsx'],
       exclude: ['dist/**', 'node_modules/**'],
@@ -23,5 +23,9 @@ export default {
     }),
     minify(),
   ],
-  output: [{ file: pkg.main, format: 'cjs' }, { file: pkg.module, format: 'es' }],
+  external: ['react'],
+  output: [
+    { file: pkg.main, format: 'cjs' },
+    { file: pkg.module, format: 'es' },
+  ],
 }
