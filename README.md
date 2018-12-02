@@ -10,8 +10,6 @@ npm i with-request
 yarn add with-request
 ```
 
-# Table of Contents
-
 1. [Params](#Params)
 2. [Examples](#Examples)
 3. [Usage with axios](#Usage-with-axios)
@@ -19,61 +17,123 @@ yarn add with-request
 
 ## Params
 
-### **createRequest** - returns withRequest
+### **createRequest** - used to connect with api adapters (fetch, axios) and cancel requests. Returns withRequest HOC
 
-| Params | Types                                                                             | Default value | Description                                                                           |
-| ------ | --------------------------------------------------------------------------------- | ------------- | ------------------------------------------------------------------------------------- |
-| fetch  | (param: {url: string, method: string, requestPayload: any}) => Promise< Payload > | -             | Used to communicate with eg: axios or fetch.                                          |
-| cancel | () => void                                                                        | () => {}      | **IN PROGRESS** - Called when request is in progress but component has been unmounted |
+```ts
+type CreateRequest = (
+  params: {
+    fetch: () => Promise<any>
+    cancel?: () => void
+  },
+) => WithRequest
+```
+
+- fetch - called on componentDidMount, componentDidUpdate, available in enhanced component props
+
+```ts
+type Fetch = (
+  params: {
+    url: string
+    method: string
+    headers: HeadersInit
+    requestPayload: any
+  },
+) => Promise<any>
+```
+
+- cancel - called on componentWillUnmount, componentDidUpdate, available in enhanced component props
+
+```ts
+type Cancel = (
+  params: {
+    url: string
+    method: string
+    headers: HeadersInit
+    requestPayload: any
+  },
+) => void
+```
 
 ### **withRequest**
 
-| Params               | Types                                       | Default value                      | Description                                                                                                    |
-| -------------------- | ------------------------------------------- | ---------------------------------- | -------------------------------------------------------------------------------------------------------------- |
-| url                  | (props: Props) => string                    | -                                  | Used to create request url based on component props                                                            |
-| method               | string                                      | 'GET'                              | Request type                                                                                                   |
-| getRequestPayload    | (props: Props) => any                       | () => null                         | Used to create request body based on component props                                                           |
-| callOnProps          | (props: Props, prevProps: Props) => boolean | () => false                        | Will call request when return true - uses componentDidUpdate to detect updates                                 |
-| callOnMount          | boolean                                     | true                               | Call request on componentDidMount                                                                              |
-| cache                | (Check cache example)                       | { set: () => {}, get: () => null } | set - called after each successful fetch. get - HOC uses returned value from `get` as payload (if is not null) |
-| deleteCacheOnUnmount | () => void                                  | () => {}                           | Called on unmount, useful to clean unused cache                                                                |
-
-## Examples
-
-Basic:
-
-```js
-withRequest({ url: () => '//your.api/products' })(YourAwesomeComponent)
+```ts
+withRequest<Props, Payload, Error = {}, RequestPayload = any, FetchParams = any>({
+  url: (props: Props, fetchParams: any) => string
+  headers?: (props: Props) => HeadersInit
+  method?: string
+  dataKey?: string
+  getRequestPayload?: (props: Props, fetchParams: FetchParams) => RequestPayload | null
+  callOnProps?: (props: Props, nextProps: Props) => boolean
+  callOnMount?: boolean
+  cache?: { set: () => void, get = () => null }
+  deleteCacheOnUnmount?: () => void
+  cancelOnUnmount?: boolean
+  cancelOnProps?: (props: Props, nextProps: Props) => boolean
+})
 ```
 
-Customizable url:
+default params:
 
-```js
-withRequest({ url: ({ id }) => `//your.api/products/${id}` })(
-  YourAwesomeComponent,
-)
+```ts
+type withRequestParams = {
+  method = 'GET',
+  headers = () => [],
+  dataKey = 'request',
+  getRequestPayload = () => null,
+  callOnProps = () => false,
+  callOnMount = true,
+  cache = { set: () => {}, get: () => null },
+  deleteCacheOnUnmount = () => {},
+  cancelOnUnmount = true,
+  cancelOnProps = () => false,
+}
 ```
 
-POST with payload:
+- url - Used to create request url based on component props
 
-```js
-withRequest({
-  url: ({ id }) => `//your.api/products/${id}`,
-  method: 'POST',
-  getRequestPayload: ({ newProductName }) => ({ name: newProductName })
-})(YourAwesomeComponent)
+```ts
+type Url<Props, FetchParams> = (
+  props: Props,
+  fetchParams: FetchParams,
+) => string
 ```
 
-Call request on props change:
+- method - request method
 
-```js
-withRequest({
-  url: () => '//your.api/products',
-  callOnProps: (props, prevProps) => props.page !== prevProps.page,
-})(YourAwesomeComponent)
+```ts
+type Method = string
 ```
 
-Cache usage example:
+- headers - request headers
+
+```ts
+type Headers = HeadersInit
+```
+
+- dataKey - prop name when request data should be injected
+
+```ts
+type DataKey = string
+```
+
+- getRequestPayload - Used to create request body based on component props
+
+```ts
+type GetRequestPayload<Props, RequestPayload, FetchParams> = (
+  props: Props,
+  fetchParams: FetchParams,
+) => RequestPayload | null
+```
+
+- callOnProps - Calls fetch when return true - uses componentDidUpdate to detect updates
+
+```ts
+type CallOnProps = (props: Props, nextProps: Props) => boolean
+```
+
+- cache - local cache configuration.
+  set - called after each successful fetch.
+  get - HOC uses returned value from get as payload. Will not call fetch if returns is different than null.
 
 ```ts
 type Cache<Props, Payload, RequestPayload> = {
@@ -87,7 +147,64 @@ type Cache<Props, Payload, RequestPayload> = {
     requestData: RequestData<RequestPayload>,
   ) => Payload | null
 }
+```
 
+- deleteCacheOnUnmount - useful to clean cache on unmounting component
+
+```ts
+type DeleteCacheOnUnmount = () => void
+```
+
+- cancelOnUnmount - determines if should call cancel on unmount
+
+```ts
+type cancelOnUnmount = boolean
+```
+
+- cancelOnProps - calls cancel when return true - uses componentDidUpdate to detect updates
+
+```ts
+type cancelOnProps = () => boolean
+```
+
+## Examples
+
+Basic:
+
+```ts
+withRequest({ url: () => '//your.api/products' })(YourAwesomeComponent)
+```
+
+Customizable url:
+
+```ts
+withRequest({ url: ({ id }) => `//your.api/products/${id}` })(
+  YourAwesomeComponent,
+)
+```
+
+POST with payload:
+
+```ts
+withRequest({
+  url: ({ id }) => `//your.api/products/${id}`,
+  method: 'POST',
+  getRequestPayload: ({ newProductName }) => ({ name: newProductName }),
+})(YourAwesomeComponent)
+```
+
+Call request on props change:
+
+```ts
+withRequest({
+  url: () => '//your.api/products',
+  callOnProps: (props, prevProps) => props.page !== prevProps.page,
+})(YourAwesomeComponent)
+```
+
+Cache usage example:
+
+```ts
 const timeCache = (seconds: number) => {
   const duration = 1000 * seconds
   let timer = performance.now()
@@ -115,7 +232,7 @@ withRequest({
 
 ## Usage with axios
 
-```js
+```ts
 const withRequest = createRequest({
   fetch: params =>
     axios({
@@ -130,7 +247,7 @@ withRequest({ url: () => '//your.api/products' })(YourAwesomeComponent)
 
 ## Usage with fetch
 
-```js
+```ts
 const withRequest = createRequest({
   fetch: params => {
     const response =

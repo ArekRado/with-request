@@ -12,6 +12,7 @@ import {
 const V = () => {}
 const F = () => false
 const N = () => null
+const A = () => []
 
 export const createRequest = ({ fetch, cancel = V }: CreateRequestParams) => <
   Props,
@@ -22,6 +23,7 @@ export const createRequest = ({ fetch, cancel = V }: CreateRequestParams) => <
 >({
   url,
   method = 'GET',
+  headers = A,
   dataKey = 'request',
   getRequestPayload = N,
   callOnProps = F,
@@ -30,10 +32,25 @@ export const createRequest = ({ fetch, cancel = V }: CreateRequestParams) => <
   deleteCacheOnUnmount = V,
   cancelOnUnmount = true,
   cancelOnProps = F,
-}: WithFetchParams<Props, Payload, RequestPayload>) => (
+}: WithFetchParams<Props, Payload, RequestPayload, FetchParams>) => (
   WrappedComponent: WrappedComponentType<Props, Payload, RequestPayload, Error>,
 ) => {
-  const callFetch = createFetch(cache, url, method, getRequestPayload, fetch)
+  const callFetch = createFetch(
+    cache,
+    url,
+    method,
+    headers,
+    getRequestPayload,
+    fetch,
+  )
+
+  const prepareRequestData = (props: Props, fetchParams?: FetchParams) => ({
+    url: url(props, fetchParams),
+    method,
+    headers: headers(props),
+    requestPayload: getRequestPayload(props, fetchParams || null),
+  })
+
   let isMounted = false
 
   return class WithRequestHOC extends Component<Props, State<Payload, Error>> {
@@ -58,7 +75,7 @@ export const createRequest = ({ fetch, cancel = V }: CreateRequestParams) => <
 
     componentWillUnmount() {
       isMounted = false
-      cancelOnUnmount && cancel()
+      cancelOnUnmount && cancel(prepareRequestData(this.props))
       deleteCacheOnUnmount()
     }
 
@@ -69,7 +86,7 @@ export const createRequest = ({ fetch, cancel = V }: CreateRequestParams) => <
         }
 
         if (cancelOnProps(prevProps, this.props)) {
-          cancel()
+          cancel(prepareRequestData(this.props))
         }
       }
     }
@@ -87,7 +104,8 @@ export const createRequest = ({ fetch, cancel = V }: CreateRequestParams) => <
           error: this.state.error,
           fetch: (params: FetchParams) =>
             callFetch(this.safeSetState, this.props, params),
-          cancel: () => cancel(),
+          cancel: (params: FetchParams) =>
+            cancel(prepareRequestData(this.props, params)),
         },
       }
 

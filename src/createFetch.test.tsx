@@ -2,20 +2,17 @@ import { createFetch } from './createFetch'
 
 describe('createFetch', () => {
   const V = () => {}
-  // const F = () => false
   const N = () => null
   const fetch = () => new Promise(resolve => resolve())
   const url = () => ''
   const method = 'GET'
-  // const dataKey = 'request'-
   const getRequestPayload = N
-  // const callOnProps = F
   const cache = { set: V, get: N }
-  // const deleteCacheOnUnmount = V
+  const headers = []
 
   it('should return function', () => {
     expect(
-      typeof createFetch(cache, url, method, getRequestPayload, fetch),
+      typeof createFetch(cache, url, method, headers, getRequestPayload, fetch),
     ).toBe('function')
   })
 
@@ -28,6 +25,7 @@ describe('createFetch', () => {
         mockedCache,
         url,
         method,
+        headers,
         getRequestPayload,
         fetch,
       )
@@ -50,6 +48,7 @@ describe('createFetch', () => {
         mockedCache,
         url,
         method,
+        headers,
         getRequestPayload,
         () => new Promise(resolve => resolve(payload as any)),
       )
@@ -73,6 +72,7 @@ describe('createFetch', () => {
         mockedCache,
         url,
         method,
+        headers,
         getRequestPayload,
         () => new Promise(resolve => resolve(payload as any)),
       )
@@ -92,6 +92,7 @@ describe('createFetch', () => {
         mockedCache,
         url,
         method,
+        headers,
         getRequestPayload,
         () => new Promise((_, reject) => reject(error as any)),
       )

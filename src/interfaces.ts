@@ -10,11 +10,16 @@ export type GetRequestPayload<Props, RequestPayload, FetchParams> = (
   fetchParams: FetchParams,
 ) => RequestPayload | null
 
-export type WithFetchParams<Props, Payload, RequestPayload> = {
+export type WithFetchParams<Props, Payload, RequestPayload, FetchParams> = {
   url: Url<Props, any>
+  headers?: (props: Props) => HeadersInit
   method?: string
   dataKey?: string
-  getRequestPayload?: (props: Props) => RequestPayload | null
+  getRequestPayload?: GetRequestPayload<
+    Props,
+    RequestPayload,
+    FetchParams | null
+  >
   callOnProps?: (props: Props, nextProps: Props) => boolean
   callOnMount?: boolean
   cache?: Cache<Props, Payload, RequestPayload>
@@ -38,6 +43,7 @@ export type Cache<Props, Payload, RequestPayload> = {
 export type RequestData<RequestPayload> = {
   url: string
   method: string
+  headers: HeadersInit
   requestPayload: RequestPayload | null
 }
 
@@ -47,7 +53,7 @@ export type Fetch<Payload, RequestPayload> = (
 
 export type CreateRequestParams = {
   fetch: Fetch<any, any>
-  cancel?: () => void
+  cancel?: (params: RequestData<any>) => void
 }
 
 export type State<Payload, Error> = {

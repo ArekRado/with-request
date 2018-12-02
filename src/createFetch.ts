@@ -5,6 +5,7 @@ export const createFetch = <Props, Payload, RequestPayload>(
   cache: Cache<Props, Payload, RequestPayload>,
   url: Url<Props, any>,
   method: string,
+  headers: (props: Props) => HeadersInit,
   getRequestPayload: GetRequestPayload<Props, RequestPayload, any>,
   fetch: Fetch<Payload, RequestPayload>,
 ) => async (
@@ -15,6 +16,7 @@ export const createFetch = <Props, Payload, RequestPayload>(
   const requestData = {
     url: url(props, fetchParams),
     method,
+    headers: headers(props),
     requestPayload: getRequestPayload(props, fetchParams),
   }
   const cachePayload = cache.get(props, requestData)
