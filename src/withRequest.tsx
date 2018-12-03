@@ -18,8 +18,8 @@ export const createRequest = ({ fetch, cancel = V }: CreateRequestParams) => <
   Props,
   Payload,
   Error = {},
-  RequestPayload = any,
-  FetchParams = any
+  RequestPayload = null,
+  FetchParams = null
 >({
   url,
   method = 'GET',
@@ -33,9 +33,9 @@ export const createRequest = ({ fetch, cancel = V }: CreateRequestParams) => <
   cancelOnUnmount = true,
   cancelOnProps = F,
 }: WithFetchParams<Props, Payload, RequestPayload, FetchParams>) => (
-  WrappedComponent: WrappedComponentType<Props, Payload, RequestPayload, Error>,
+  WrappedComponent: WrappedComponentType<Props, Payload, Error, FetchParams>,
 ) => {
-  const callFetch = createFetch(
+  const callFetch = createFetch<Props, Payload, RequestPayload, FetchParams>(
     cache,
     url,
     method,
@@ -44,11 +44,11 @@ export const createRequest = ({ fetch, cancel = V }: CreateRequestParams) => <
     fetch,
   )
 
-  const prepareRequestData = (props: Props, fetchParams?: FetchParams) => ({
-    url: url(props, fetchParams),
+  const prepareRequestData = (props: Props, params: FetchParams | null) => ({
+    url: url(props, params),
     method,
     headers: headers(props),
-    requestPayload: getRequestPayload(props, fetchParams || null),
+    requestPayload: getRequestPayload(props, params),
   })
 
   let isMounted = false
@@ -75,7 +75,7 @@ export const createRequest = ({ fetch, cancel = V }: CreateRequestParams) => <
 
     componentWillUnmount() {
       isMounted = false
-      cancelOnUnmount && cancel(prepareRequestData(this.props))
+      cancelOnUnmount && cancel(prepareRequestData(this.props, null))
       deleteCacheOnUnmount()
     }
 
@@ -86,7 +86,7 @@ export const createRequest = ({ fetch, cancel = V }: CreateRequestParams) => <
         }
 
         if (cancelOnProps(prevProps, this.props)) {
-          cancel(prepareRequestData(this.props))
+          cancel(prepareRequestData(this.props, null))
         }
       }
     }

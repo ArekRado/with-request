@@ -58,7 +58,7 @@ type Cancel = (
 
 ```ts
 withRequest<Props, Payload, Error = {}, RequestPayload = any, FetchParams = any>({
-  url: (props: Props, fetchParams: any) => string
+  url: (props: Props, fetchParams: FetchParams) => string
   headers?: (props: Props) => HeadersInit
   method?: string
   dataKey?: string
@@ -94,7 +94,7 @@ type withRequestParams = {
 ```ts
 type Url<Props, FetchParams> = (
   props: Props,
-  fetchParams: FetchParams,
+  fetchParams: FetchParams | null,
 ) => string
 ```
 

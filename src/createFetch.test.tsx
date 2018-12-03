@@ -8,7 +8,7 @@ describe('createFetch', () => {
   const method = 'GET'
   const getRequestPayload = N
   const cache = { set: V, get: N }
-  const headers = []
+  const headers = () => []
 
   it('should return function', () => {
     expect(

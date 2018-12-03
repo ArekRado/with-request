@@ -2,7 +2,7 @@ import { ComponentType } from 'react'
 
 export type Url<Props, FetchParams> = (
   props: Props,
-  fetchParams: FetchParams,
+  fetchParams: FetchParams | null,
 ) => string
 
 export type GetRequestPayload<Props, RequestPayload, FetchParams> = (
@@ -11,7 +11,7 @@ export type GetRequestPayload<Props, RequestPayload, FetchParams> = (
 ) => RequestPayload | null
 
 export type WithFetchParams<Props, Payload, RequestPayload, FetchParams> = {
-  url: Url<Props, any>
+  url: Url<Props, FetchParams>
   headers?: (props: Props) => HeadersInit
   method?: string
   dataKey?: string
@@ -63,15 +63,15 @@ export type State<Payload, Error> = {
   error: Error | null
 }
 
-export type InjectedProps<Payload, RequestPayload, Error> = {
+export type InjectedProps<Payload = null, Error = null, FetchParams = null> = {
   [key in string]: {
-    fetch: () => Promise<void>
+    fetch: (params: FetchParams) => Promise<void>
   } & State<Payload, Error>
 }
 
 export type WrappedComponentType<
   Props,
   Payload,
-  RequestPayload,
-  Error
-> = ComponentType<InjectedProps<Payload, RequestPayload, Error> | Props>
+  Error,
+  FetchParams
+> = ComponentType<InjectedProps<Payload, Error, FetchParams> | Props>
