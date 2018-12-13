@@ -1,6 +1,6 @@
 {
   "name": "with-request",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "HOC to call cacheable requests",
   "main": "dist/lib/withRequest.js",
   "module": "dist/es/withRequest.js",
@@ -8,8 +8,7 @@
   "npmName": "with-request",
   "sideEffects": false,
   "files": [
-    "dist",
-    "src"
+    "dist"
   ],
   "scripts": {
     "build": "rollup -c",
